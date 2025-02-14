@@ -1,15 +1,10 @@
-from typing import Annotated
-
-from fastapi import Depends, FastAPI
-
-from app.config import Settings, get_settings
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
+templates = Jinja2Templates(directory="app/frontend/templates")
+
 @app.get("/")
-async def read_root(settings: Annotated[Settings, Depends(get_settings)]):
-    return {
-        "message": "Hello World",
-        "app_name": settings.APP_TITLE,
-        "app_version": settings.APP_VERSION,
-    }
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
