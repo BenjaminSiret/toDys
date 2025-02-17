@@ -1,0 +1,157 @@
+<div class="flex flex-col items-center justify-center w-full max-w-2xl mx-auto space-y-4"
+      x-data="{
+        file: null,
+        isValid: false,
+        isDragging: false,
+        errorMessage: null,
+        acceptedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text', 'text/plain'],
+        acceptedExtensions: ['.pdf', '.doc', '.docx', '.odt', '.txt'],
+        formatFileSize(bytes) {
+          if (bytes === 0) return '0 Bytes';
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+        validateFile(file) {
+          if (!file) return false;
+          const extension = '.' + file.name.split('.').pop().toLowerCase();
+          const isValidType = this.acceptedTypes.includes(file.type);
+          const isValidExtension = this.acceptedExtensions.includes(extension);
+
+          if (!isValidType && !isValidExtension) {
+            this.errorMessage = 'Format de fichier non supporté';
+            return false;
+          }
+
+          this.errorMessage = null;
+          return true;
+        },
+        handleDrop(e) {
+          this.isDragging = false;
+          const droppedFile = e.dataTransfer.files[0];
+          if (this.validateFile(droppedFile)) {
+            this.file = droppedFile;
+            this.isValid = true;
+            this.uploadFile();
+          }
+        },
+        uploadFile() {
+          if (this.file && this.isValid) {
+            const formData = new FormData();
+            formData.append('file', this.file);
+
+            fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (!data.success) {
+                this.errorMessage = data.error;
+                this.isValid = false;
+              } else {
+                this.errorMessage = null;
+                // Émet un événement pour informer le parent que le fichier est prêt
+                this.$dispatch('file-uploaded', {
+                  filename: data.filename,
+                  mimeType: data.mime_type
+                });
+              }
+            })
+            .catch(error => {
+              this.errorMessage = 'Erreur lors du chargement du fichier';
+              this.isValid = false;
+              return;
+            });
+          }
+        },
+      }"
+      @dragover.prevent="isDragging = true"
+      @dragleave.prevent="isDragging = false"
+      @drop.prevent="handleDrop($event)"
+    >
+        <label for="dropzone-file"
+          class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200"
+          :class="isDragging
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900 dark:border-blue-400'
+            : 'border-gray-300 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600'"
+          role="button"
+          tabindex="0"
+          @keydown.space.prevent="$refs.fileInput.click()"
+          @keydown.enter.prevent="$event.preventDefault()"
+          aria-label="Zone de dépôt de fichier">
+
+            <!-- État initial - pas de fichier -->
+            <div x-show="!file"
+                class="flex flex-col items-center justify-center pt-5 pb-6"
+                role="region"
+                aria-label="Instructions de téléchargement">
+                <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Cliquez pour télécharger</span> ou glissez-déposez</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400" id="file-types">Formats acceptés : pdf, docx, doc, odt, txt</p>
+            </div>
+
+            <!-- Message d'erreur -->
+            <div x-show="errorMessage"
+                x-transition
+                class="text-red-500 text-sm mt-2 text-center"
+                role="alert"
+                x-text="errorMessage">
+            </div>
+
+            <!-- État avec fichier sélectionné -->
+            <div x-show="file && isValid"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="flex flex-col items-center justify-center w-full max-w-sm p-4"
+                role="region"
+                aria-label="Fichier sélectionné">
+                <div class="relative w-16 h-20 mb-3">
+                    <!-- Icône de document -->
+                    <svg class="w-full h-full text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <!-- Badge de succès -->
+                    <div class="absolute -right-1 -top-1 bg-green-500 rounded-full p-1" role="status" aria-label="Fichier prêt">
+                        <svg class="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-1" x-text="file?.name || ''" aria-live="polite"></h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4" x-text="file ? formatFileSize(file.size) : ''" aria-live="polite"></p>
+
+                <div class="flex space-x-3">
+                    <button @click.prevent="file = null; isValid = false; errorMessage = null"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        aria-label="Changer de fichier">
+                        Changer
+                    </button>
+                    <button @click.prevent="$dispatch('transform-file', { filename: file.name })"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        aria-label="Transformer le document">
+                        Transformer
+                    </button>
+                </div>
+            </div>
+
+            <input
+                id="dropzone-file"
+                type="file"
+                class="hidden"
+                @change="const inputFile = $event.target.files[0]; if (validateFile(inputFile)) { file = inputFile; isValid = true; uploadFile(); }"
+                accept=".pdf,.doc,.docx,.odt,.txt"
+                x-ref="fileInput"
+                aria-describedby="file-types" />
+        </label>
+    </div>
