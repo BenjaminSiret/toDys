@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+import asyncio
 
 import pytest
 from fastapi import UploadFile
@@ -10,8 +11,15 @@ def mock_file():
     file = Mock(spec=UploadFile)
     file.filename = "test.pdf"
     file.content_type = "application/pdf"
-    file.read = Mock(return_value=b"test content")
-    file.seek = Mock()
+    
+    async def async_read():
+        return b"test content"
+    
+    async def async_seek(position):
+        pass
+    
+    file.read = async_read
+    file.seek = async_seek
     return file
 
 @pytest.fixture

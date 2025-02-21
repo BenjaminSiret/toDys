@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Set
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic.types import DirectoryPath, PositiveInt
 
 
@@ -39,9 +39,11 @@ class Settings(BaseModel):
         return v
 
     class Config:
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
-        case_sensitive = True
+        model_config = ConfigDict(
+            env_file='.env',
+            env_file_encoding='utf-8',
+            case_sensitive=True
+        )
 
 @lru_cache()
 def get_settings() -> Settings:
