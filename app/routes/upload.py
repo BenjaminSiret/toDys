@@ -4,9 +4,11 @@ Routes pour la gestion des uploads de fichiers.
 import logging
 import traceback
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from ..config import get_settings
 from ..schemas.upload import UploadResponse
 from ..services.file_validator import FileValidator
 from ..services.supabase_service import SupabaseService
@@ -16,8 +18,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 file_validator = FileValidator()
 supabase_service = SupabaseService()
+settings = get_settings()
 
-@router.post("/api/upload", response_model=UploadResponse)
 async def get_upload_file_size(file: UploadFile) -> Optional[int]:
   try:
     return len(await file.read())
@@ -26,6 +28,7 @@ async def get_upload_file_size(file: UploadFile) -> Optional[int]:
   finally:
     await file.seek(0)
 
+@router.post("/api/upload", response_model=UploadResponse)
 async def upload_file(file: UploadFile = File(...)) -> UploadResponse:
     """
     Endpoint pour l'upload de fichiers avec validation et stockage dans Supabase.

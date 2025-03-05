@@ -23,7 +23,7 @@ class Settings(BaseModel):
     PORT: PositiveInt = 8000
 
     # Upload
-    MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE"))
+    MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", "10485760"))
     ALLOWED_EXTENSIONS: Set[str] = {"pdf", "docx", "doc", "odt", "txt", "rtf"}
     UPLOAD_DIR: DirectoryPath = Path("uploads")
 
