@@ -1,10 +1,14 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Set
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic.types import DirectoryPath, PositiveInt
 
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
 
 class Settings(BaseModel):
     # App Info
@@ -19,7 +23,7 @@ class Settings(BaseModel):
     PORT: PositiveInt = 8000
 
     # Upload
-    MAX_UPLOAD_SIZE: PositiveInt = 10 * 1024 * 1024  # 10MB
+    MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE"))
     ALLOWED_EXTENSIONS: Set[str] = {"pdf", "docx", "doc", "odt", "txt", "rtf"}
     UPLOAD_DIR: DirectoryPath = Path("uploads")
 
