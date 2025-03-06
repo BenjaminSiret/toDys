@@ -1,9 +1,13 @@
+"""
+Service pour gérer les interactions avec Supabase.
+"""
 import os
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
-from dotenv import load_dotenv
-from supabase import create_client, Client
 from fastapi import UploadFile
+from supabase import Client, create_client
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -14,15 +18,15 @@ class SupabaseService:
         self.supabase: Client = create_client(url, key)
         self.bucket_name = "temp_files"
 
-    async def upload_file(self, file: UploadFile) -> dict:
+    async def upload_file(self, file: UploadFile) -> Dict[str, Any]:
         """
-        Upload a file to Supabase storage and create a database record.
-        
+        Upload un fichier vers Supabase et crée un enregistrement dans la base.
+
         Args:
-            file (UploadFile): The file to upload
+            file (UploadFile): Le fichier à uploader
         
         Returns:
-            dict: Information about the uploaded file including URL and database ID
+            Dict[str, Any]: Informations sur le fichier uploadé incluant URL et ID en base
         """
         try:
             # Lire le contenu du fichier
@@ -60,3 +64,30 @@ class SupabaseService:
         except Exception as e:
             # En cas d'erreur, propager l'exception
             raise Exception(f"Erreur lors de l'upload: {str(e)}")
+
+    async def update_file_status(self, file_id: str, status: str, transformed_path: str = None) -> Dict[str, Any]:
+        """
+        Met à jour le statut d'un fichier.
+        
+        Args:
+            file_id (str): L'identifiant du fichier à mettre à jour
+            status (str): Le nouveau statut du fichier
+            transformed_path (str, optional): Le chemin du fichier transformé, si applicable
+            
+        Returns:
+            Dict[str, Any]: Les données mises à jour du fichier
+        """
+        update_data = {
+            'status': status,
+            'processed_at': datetime.now().isoformat()
+        }
+
+        if transformed_path:
+            update_data['transformed_file_path'] = transformed_path
+
+        result = self.supabase.table('temp_files')\
+            .update(update_data)\
+            .eq('id', file_id)\
+            .execute()
+
+        return result.data[0] if result.data else None
