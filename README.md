@@ -4,11 +4,13 @@
 
 ## Table des Matières
 
-- [Fonctionnalités](#fonctionnalités)
-- [Stack Technique](#stack-technique)
-- [Installation](#installation)
-- [Contribuer](#contribuer)
-- [Licence](#licence)
+- [toDys](#todys)
+  - [Table des Matières](#table-des-matières)
+  - [Fonctionnalités](#fonctionnalités)
+  - [Stack Technique](#stack-technique)
+  - [Installation](#installation)
+  - [Contribuer](#contribuer)
+  - [Licence](#licence)
 
 ## Fonctionnalités
 
@@ -28,10 +30,10 @@
   - **FastAPI** : Pour créer une API rapide et performante avec Python.
 
 - **Pipeline IA** :
-  - **Hugging Face Transformers** : Utilisation d'un modèle BERT pré-entraîné pour la transformation de texte.
+  - **LLM** : Utilisation d'un LLM pour la transformation de texte.
 
 - **Stockage** :
-  - **Local Storage** : Pour un stockage temporaire des fichiers.
+  - **Supabase** : Pour un stockage temporaire des fichiers.
 
 - **Déploiement** :
   - **Vercel** : Pour un déploiement facile et une intégration continue.
